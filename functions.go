@@ -14,23 +14,17 @@ type myDockerCli struct {
 	*client.Client
 }
 
-func (cli *myDockerCli) containerByName(name string) (container *types.Container, ok bool) {
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
-	if err != nil {
-		panic(err)
-	}
-	for _, container := range containers {
-		for _, cName := range container.Names {
-			if name == cName[1:] { //[1:] removed prefix '/' from container's name
-				return &container, true
-			}
+func runIfTrue(runIt func() error, ifTrue func() bool) error {
+	if ifTrue() {
+		if err := runIt(); err != nil {
+			log.Print(err)
+			return err
 		}
 	}
-	return nil, false
+	return nil
 }
 
-func getDockerClient(host, version string) (*myDockerCli, error) {
-
+func myDockerClient(host, version string) (*myDockerCli, error) {
 	if host != "unix:///var/run/docker.sock" {
 		os.Setenv("DOCKER_HOST", host)
 	}
@@ -43,12 +37,12 @@ func getDockerClient(host, version string) (*myDockerCli, error) {
 	}
 }
 
-func ipChangeFunc(domain string) func() bool {
+func ipChanged(domain string) func() bool {
 	oldIp := ""
 	return func() bool {
 		ips, err := net.LookupIP(domain)
 		if err != nil {
-			log.Printf("Cannot resolve %s", domain)
+			log.Printf("Warning: %v.", err)
 			return false
 		}
 		ip := ips[0].String()
@@ -67,26 +61,31 @@ func ipChangeFunc(domain string) func() bool {
 	}
 }
 
-func conditionExec(fExe func() error, fCon func() bool) error {
-	if con := fCon(); con {
-		if err := fExe(); err != nil {
-			log.Print(err)
-			return err
+func (cli *myDockerCli) getContainer(name string) (container *types.Container, ok bool) {
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	for _, container := range containers {
+		for _, cName := range container.Names {
+			if name == cName[1:] { //[1:] removed prefix '/' from container's name
+				return &container, true
+			}
 		}
 	}
-	return nil
+	return nil, false
 }
 
-func restartContainer(cName string, cli *myDockerCli) func() error {
+func run2RestartContainer(cli *myDockerCli, name string) func() error {
 	return func() error {
-		if container, ok := cli.containerByName(cName); ok {
+		if container, ok := cli.getContainer(name); ok {
 			if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
 				return err
 			} else {
-				log.Printf("Container %s restarted", cName)
+				log.Printf("Container %s restarted", name)
 			}
 		} else {
-			return fmt.Errorf("container %s not found", cName)
+			return fmt.Errorf("container %s not found", name)
 		}
 		return nil
 	}

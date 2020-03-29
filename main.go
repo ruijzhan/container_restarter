@@ -22,15 +22,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	cli, err := getDockerClient(*host, *version)
+	cli, err := myDockerClient(*host, *version)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ipChanged := ipChangeFunc(*domain)
-	restartFunc := restartContainer(*container, cli)
+	restartCondition := ipChanged(*domain)
+	restartContainer := run2RestartContainer(cli, *container)
 	for {
-		conditionExec(restartFunc, ipChanged)
+		runIfTrue(restartContainer, restartCondition)
 		time.Sleep(*interval)
 	}
 
