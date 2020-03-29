@@ -6,4 +6,6 @@ arch:
 services:
   - docker
 
-script: make get_build
+script:
+  - make get_build
+  - make docker_image TAG=$(go env GOHOSTARCH)
