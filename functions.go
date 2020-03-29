@@ -31,18 +31,12 @@ func (cli *myDockerCli)containerByName(name string) (container *types.Container,
 
 func getDockerClient(host, version string) (*myDockerCli, error)  {
 
-	f := func(c *client.Client) error{
-
-			if err := client.WithHost(host)(c); err != nil {
-				return err
-			}
-			if err := client.WithVersion(version)(c); err != nil {
-				return err
-			}
-	    	return nil
+	if host != "unix:///var/run/docker.sock" {
+		os.Setenv("DOCKER_HOST", host)
 	}
+	os.Setenv("DOCKER_API_VERSION", version)
 
-	if cli, err := client.NewClientWithOpts(f); err != nil {
+	if cli, err := client.NewClientWithOpts(client.FromEnv); err != nil {
 		return nil, err
 	} else {
 		return &myDockerCli{cli}, nil
