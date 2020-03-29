@@ -6,4 +6,4 @@ arch:
 services:
   - docker
 
-script: make docker_build
+script: make get_build
