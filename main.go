@@ -28,6 +28,7 @@ func main() {
 	}
 
 	restartCondition := ipChanged(*domain)
+	restartCondition() //init resolve result
 	restartContainer := run2RestartContainer(cli, *container)
 	for {
 		runIfTrue(restartContainer, restartCondition)
