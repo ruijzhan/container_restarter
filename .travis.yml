@@ -1,4 +1,8 @@
 language: go
+
+go:
+  - 1.14.1
+
 arch:
   - amd64
   - arm64
@@ -8,7 +12,6 @@ services:
 
 script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - make get
   - make
   - docker build . -t $DOCKER_USERNAME/container_restarter:$(go env GOHOSTARCH)
   - docker push $DOCKER_USERNAME/container_restarter:$(go env GOHOSTARCH)
