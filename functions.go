@@ -30,15 +30,16 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 	}
 	os.Setenv("DOCKER_API_VERSION", version)
 
-	if cli, err := client.NewClientWithOpts(client.FromEnv); err != nil {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
 		return nil, err
-	} else {
-		return &myDockerCli{cli}, nil
 	}
+
+	return &myDockerCli{cli}, nil
 }
 
 func ipChanged(domain string) func() bool {
-	oldIp := ""
+	oldIP := ""
 	return func() bool {
 		ips, err := net.LookupIP(domain)
 		if err != nil {
@@ -47,14 +48,14 @@ func ipChanged(domain string) func() bool {
 		}
 		ip := ips[0].String()
 
-		if oldIp == "" {
-			oldIp = ip
+		if oldIP == "" {
+			oldIP = ip
 			return false
 		}
 
-		if ip != oldIp {
-			log.Printf("IP address changed from %s to %s", oldIp, ip)
-			oldIp = ip
+		if ip != oldIP {
+			log.Printf("IP address changed from %s to %s", oldIP, ip)
+			oldIP = ip
 			return true
 		}
 		return false
@@ -81,9 +82,8 @@ func run2RestartContainer(cli *myDockerCli, name string) func() error {
 		if container, ok := cli.getContainer(name); ok {
 			if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
 				return err
-			} else {
-				log.Printf("Container %s restarted", name)
 			}
+			log.Printf("Container %s restarted", name)
 		} else {
 			return fmt.Errorf("container %s not found", name)
 		}
