@@ -9,7 +9,7 @@ BINARY_NAME=restarter
 all: build
 
 build:
-	CGO_ENABLED=0 GOOS=linux $(GOBUILD) -o $(BINARY_NAME) -v
+	CGO_ENABLED=0 GOOS=linux $(GOBUILD) -ldflags "-s -w" -o $(BINARY_NAME) -v
 
 get:
 	$(GOGET) -u ./...
