@@ -8,20 +8,11 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 type myDockerCli struct {
 	*client.Client
-}
-
-func runIfTrue(runIt func() error, ifTrue func() bool) error {
-	if ifTrue() {
-		if err := runIt(); err != nil {
-			log.Print(err)
-			return err
-		}
-	}
-	return nil
 }
 
 func myDockerClient(host, version string) (*myDockerCli, error) {
@@ -38,28 +29,27 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 	return &myDockerCli{cli}, nil
 }
 
-func ipChanged(domain string) func() bool {
+func detectIPChange(d string, i time.Duration) {
 	oldIP := ""
-	return func() bool {
-		ips, err := net.LookupIP(domain)
+	for {
+		ips, err := net.LookupIP(d)
 		if err != nil {
 			log.Printf("Warning: %v.", err)
-			return false
 		}
 		ip := ips[0].String()
 
 		if oldIP == "" {
 			oldIP = ip
-			return false
 		}
 
 		if ip != oldIP {
-			log.Printf("IP address changed from %s to %s", oldIP, ip)
+			//log.Printf("IP address changed from %s to %s", oldIP, ip)
 			oldIP = ip
-			return true
+			changedIP <- ip
 		}
-		return false
+		time.Sleep(i)
 	}
+
 }
 
 func (cli *myDockerCli) getContainer(name string) (container *types.Container, ok bool) {

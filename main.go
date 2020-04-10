@@ -13,6 +13,7 @@ var (
 	interval  = flag.Duration("i", time.Duration(10*time.Second), "Time interval to check IP change on domain")
 	host      = flag.String("h", "unix:///var/run/docker.sock", "docker server host")
 	version   = flag.String("v", "1.40", "Docker API version")
+	changedIP = make(chan string)
 )
 
 func main() {
@@ -27,12 +28,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	restartCondition := ipChanged(*domain)
-	restartCondition() //init resolve result
-	restartContainer := run2RestartContainer(cli, *container)
+	var f func() error
+	if *container == "debug" {
+		f = func() error { return nil }
+	} else {
+		f = run2RestartContainer(cli, *container)
+	}
+
+	go detectIPChange(*domain, *interval)
 	for {
-		runIfTrue(restartContainer, restartCondition)
-		time.Sleep(*interval)
+		select {
+		case ip := <-changedIP:
+			log.Printf("IP address changed to %s", ip)
+			f()
+		}
 	}
 
 }
