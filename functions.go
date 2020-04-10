@@ -32,24 +32,24 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 func detectIPChange(d string, i time.Duration) {
 	oldIP := ""
 	for {
-		ips, err := net.LookupIP(d)
-		if err != nil {
-			log.Printf("Warning: %v.", err)
-		}
-		ip := ips[0].String()
+		select {
+		case <-time.Tick(i):
+			ips, err := net.LookupIP(d)
+			if err != nil {
+				log.Printf("Warning: %v.", err)
+			}
+			ip := ips[0].String()
 
-		if oldIP == "" {
-			oldIP = ip
-		}
+			if oldIP == "" {
+				oldIP = ip
+			}
 
-		if ip != oldIP {
-			//log.Printf("IP address changed from %s to %s", oldIP, ip)
-			oldIP = ip
-			changedIP <- ip
+			if ip != oldIP {
+				oldIP = ip
+				changedIP <- ip
+			}
 		}
-		time.Sleep(i)
 	}
-
 }
 
 func (cli *myDockerCli) getContainer(name string) (container *types.Container, ok bool) {
