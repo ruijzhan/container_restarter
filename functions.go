@@ -29,17 +29,15 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 	return &myDockerCli{cli}, nil
 }
 
-func detectIPChange(d string, i time.Duration) {
+func detectIPChange(d string) {
 	oldIP := ""
-loop:
+	tick := time.Tick(*interval)
 	for {
-		select {
-		case <-time.Tick(i):
-			ips, err := net.LookupIP(d)
-			if err != nil {
-				log.Printf("Warning: %v.", err)
-				break loop
-			}
+		<-tick
+		ips, err := net.LookupIP(d)
+		if err != nil {
+			log.Printf("Warning: %v.", err)
+		} else {
 			ip := ips[0].String()
 
 			if oldIP == "" {

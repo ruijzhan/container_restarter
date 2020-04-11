@@ -35,13 +35,11 @@ func main() {
 		f = fRestartC(cli, *container)
 	}
 
-	go detectIPChange(*domain, *interval)
+	go detectIPChange(*domain)
 	for {
-		select {
-		case ip := <-changedIP:
-			log.Printf("IP address changed to %s", ip)
-			f()
-		}
+		ip := <-changedIP
+		log.Printf("IP address changed to %s", ip)
+		f()
 	}
 
 }
