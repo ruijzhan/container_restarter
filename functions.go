@@ -29,26 +29,34 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 	return &myDockerCli{cli}, nil
 }
 
-func detectIPChange(d string) {
+func resolver(d string) func() chan string {
 	oldIP := ""
 	tick := time.Tick(*interval)
-	for {
-		<-tick
-		ips, err := net.LookupIP(d)
-		if err != nil {
-			log.Printf("Warning: %v.", err)
-		} else {
-			ip := ips[0].String()
+	ch := make(chan string)
 
-			if oldIP == "" {
-				oldIP = ip
-			}
+	return func() chan string {
+		go func() {
+			for {
+				<-tick
+				ips, err := net.LookupIP(d)
+				if err != nil {
+					log.Printf("Warning: %v.", err)
+				} else {
+					ip := ips[0].String()
 
-			if ip != oldIP {
-				oldIP = ip
-				changedIP <- ip
+					if oldIP == "" {
+						oldIP = ip
+					}
+
+					if ip != oldIP {
+						oldIP = ip
+						ch <- ip
+						return
+					}
+				}
 			}
-		}
+		}()
+		return ch
 	}
 }
 
