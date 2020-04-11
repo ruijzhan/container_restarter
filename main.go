@@ -32,7 +32,7 @@ func main() {
 	if *container == "debug" {
 		f = func() error { return nil }
 	} else {
-		f = run2RestartContainer(cli, *container)
+		f = fRestartC(cli, *container)
 	}
 
 	go detectIPChange(*domain, *interval)

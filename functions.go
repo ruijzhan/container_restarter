@@ -31,12 +31,14 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 
 func detectIPChange(d string, i time.Duration) {
 	oldIP := ""
+loop:
 	for {
 		select {
 		case <-time.Tick(i):
 			ips, err := net.LookupIP(d)
 			if err != nil {
 				log.Printf("Warning: %v.", err)
+				break loop
 			}
 			ip := ips[0].String()
 
@@ -67,7 +69,7 @@ func (cli *myDockerCli) getContainer(name string) (container *types.Container, o
 	return nil, false
 }
 
-func run2RestartContainer(cli *myDockerCli, name string) func() error {
+func fRestartC(cli *myDockerCli, name string) func() error {
 	return func() error {
 		if container, ok := cli.getContainer(name); ok {
 			if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
