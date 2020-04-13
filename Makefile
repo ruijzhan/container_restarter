@@ -8,6 +8,9 @@ BINARY_NAME=restarter
 
 all: build
 
+test:
+    $(GOTEST)
+
 build:
 	CGO_ENABLED=0 GOOS=linux $(GOBUILD) -ldflags "-s -w" -o $(BINARY_NAME) -v
 

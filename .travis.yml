@@ -12,6 +12,7 @@ services:
 
 script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - make test
   - make
   - docker build . -t $DOCKER_USERNAME/container_restarter:$(uname -p)
   - docker push $DOCKER_USERNAME/container_restarter:$(uname -p)

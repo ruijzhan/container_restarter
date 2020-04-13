@@ -29,8 +29,19 @@ func myDockerClient(host, version string) (*myDockerCli, error) {
 	return &myDockerCli{cli}, nil
 }
 
+var lookup = func(d string) (string, error) { // define func var for testing
+	ips, err := net.LookupIP(d)
+	if err != nil {
+		return "", err
+	}
+	return ips[0].String(), nil
+}
+
 func resolver(d string) func() chan string {
-	oldIP := ""
+	oldIP, err := lookup(d)
+	if err != nil {
+		log.Printf("Warning: %v.", err)
+	}
 	tick := time.Tick(*interval)
 	ch := make(chan string)
 
@@ -38,15 +49,10 @@ func resolver(d string) func() chan string {
 		go func() {
 			for {
 				<-tick
-				ips, err := net.LookupIP(d)
+				ip, err := lookup(d)
 				if err != nil {
 					log.Printf("Warning: %v.", err)
 				} else {
-					ip := ips[0].String()
-
-					if oldIP == "" {
-						oldIP = ip
-					}
 
 					if ip != oldIP {
 						oldIP = ip
