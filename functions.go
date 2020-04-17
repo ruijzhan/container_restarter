@@ -42,7 +42,7 @@ func resolver(d string) func() chan string {
 	if err != nil {
 		log.Printf("Warning: %v.", err)
 	}
-	tick := time.Tick(*interval)
+	tick := time.Tick(interval)
 	ch := make(chan string)
 
 	return func() chan string {

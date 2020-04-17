@@ -45,7 +45,7 @@ func TestResolver(t *testing.T) {
 	saved := lookup
 	defer func() { lookup = saved }()
 	lookup = fakeLookup()
-	*interval = time.Duration(time.Microsecond)
+	interval = time.Duration(time.Microsecond)
 
 	r := resolver("www.example.com")
 	for i := 0; i < len(changedIPs); i++ {
