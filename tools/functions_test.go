@@ -1,4 +1,4 @@
-package main
+package tools
 
 import (
 	"testing"
@@ -45,9 +45,9 @@ func TestResolver(t *testing.T) {
 	saved := lookup
 	defer func() { lookup = saved }()
 	lookup = fakeLookup()
-	interval = time.Duration(time.Microsecond)
+	interval := time.Duration(time.Microsecond)
 
-	r := resolver("www.example.com")
+	r := Resolver("www.example.com", interval)
 	for i := 0; i < len(changedIPs); i++ {
 		ip := <-r()
 		if changedIPs[i] != ip {
@@ -55,3 +55,8 @@ func TestResolver(t *testing.T) {
 		}
 	}
 }
+
+//func TestLookup(t *testing.T) {
+//	var domain = "www.google.com"
+//	fmt.Println(net.LookupIP(domain))
+//}

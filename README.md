@@ -7,6 +7,8 @@ Usage:
 Usage of ./container_restarter:
   -c string
         Name of container to restart
+  -id string
+        ID of the container to restart
   -d string
         Domain name to watch IP change
   -h string
