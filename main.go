@@ -2,8 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/ruijzhan/container_restarter/tools"
-	mbus "github.com/vardius/message-bus"
+	"github.com/ruijzhan/container_restarter/utils"
 	"log"
 	"os"
 	"time"
@@ -29,49 +28,6 @@ func init() {
 	flag.StringVar(&version, "v", "1.40", "Docker API version")
 }
 
-type myContainer struct {
-	dockerCli *tools.MyDockerCli
-	id        string
-	name      string
-}
-
-func NewMyContainer(id, name string) *myContainer {
-	cli, err := tools.MyDockerClient(host, version)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &myContainer{
-		dockerCli: cli,
-		id:        id,
-		name:      name,
-	}
-}
-
-func (c *myContainer) restart() {
-	c.dockerCli.RestartContainer(c.id, c.name)
-}
-
-type myMsgBus struct {
-	mbus.MessageBus
-	topic string
-}
-
-func NewMyMsgBus() *myMsgBus {
-	return &myMsgBus{
-		mbus.New(10),
-		"ipChanged",
-	}
-}
-
-func (m *myMsgBus) regist(c *myContainer) {
-	m.Subscribe(m.topic, c.restart)
-}
-
-func (m *myMsgBus) notify() {
-	m.Publish(m.topic)
-}
-
 func main() {
 	//命令行参数初始化
 	flag.Parse()
@@ -84,16 +40,16 @@ func main() {
 
 	//Type: channel
 	//用于存取解析的IP
-	newIP := tools.Resolver(domainName, interval)
-	bus := NewMyMsgBus()
-	bus.regist(NewMyContainer(id, container))
+	ipChanged := utils.Resolver(domainName, interval)
+	restarter := utils.NewMyMsgBus()
+	restarter.Regist(utils.NewMyContainer(id, container))
 
 	for {
-		// <-newIP() is blocked till *domainName resolved IP changes
+		// <-ipChanged() is blocked till *domainName resolved IP changes
 		select {
-		case ip := <-newIP():
-			log.Printf("IP address changed to %s", ip)
-			bus.notify()
+		case newIP := <-ipChanged():
+			log.Printf("IP address changed to %s", newIP)
+			restarter.Notify()
 		}
 	}
 

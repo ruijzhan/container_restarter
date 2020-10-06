@@ -1,4 +1,4 @@
-package tools
+package utils
 
 import (
 	"context"
@@ -6,9 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"log"
-	"net"
 	"os"
-	"time"
 )
 
 type MyDockerCli struct {
@@ -16,9 +14,15 @@ type MyDockerCli struct {
 }
 
 //新建Docker客户端
-func MyDockerClient(host, version string) (*MyDockerCli, error) {
+func NewMyDockerCli(host, version string) (*MyDockerCli, error) {
+	if host == "" {
+		host = "unix:///var/run/docker.sock"
+	}
 	if host != "unix:///var/run/docker.sock" {
 		os.Setenv("DOCKER_HOST", host)
+	}
+	if version == "" {
+		version = "1.40"
 	}
 	os.Setenv("DOCKER_API_VERSION", version)
 
@@ -28,45 +32,6 @@ func MyDockerClient(host, version string) (*MyDockerCli, error) {
 	}
 
 	return &MyDockerCli{cli}, nil
-}
-
-var lookup = func(d string) (string, error) { // define func var for testing
-	ips, err := net.LookupIP(d)
-	if err != nil {
-		return "", err
-	}
-	return ips[0].String(), nil
-}
-
-func Resolver(d string, interval time.Duration) func() chan string {
-	oldIP, err := lookup(d)
-	if err != nil {
-		log.Printf("Warning: %v.", err)
-	}
-	tick := time.Tick(interval)
-	ch := make(chan string)
-
-	return func() chan string {
-		go func() {
-			for {
-				<-tick
-				ip, err := lookup(d)
-
-				if err != nil {
-					log.Printf("Warning: %v.", err)
-				} else {
-
-					if ip != oldIP {
-						oldIP = ip
-						ch <- ip
-						return
-					}
-				}
-			}
-		}()
-
-		return ch
-	}
 }
 
 //判断给定容器名称对应的目标容器是否存在，存在则返回对应的容器对象 &container
@@ -132,7 +97,7 @@ func (cli *MyDockerCli) restartContainerByID(id string) error {
 	return nil
 }
 
-func (cli *MyDockerCli) RestartContainer(id, name string) error {
+func (cli *MyDockerCli) restartContainer(id, name string) error {
 	if id != "" {
 		return cli.restartContainerByID(id)
 	}

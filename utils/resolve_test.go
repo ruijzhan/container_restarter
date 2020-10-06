@@ -1,4 +1,4 @@
-package tools
+package utils
 
 import (
 	"testing"
@@ -55,8 +55,3 @@ func TestResolver(t *testing.T) {
 		}
 	}
 }
-
-//func TestLookup(t *testing.T) {
-//	var domain = "www.google.com"
-//	fmt.Println(net.LookupIP(domain))
-//}
