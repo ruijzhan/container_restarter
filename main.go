@@ -29,6 +29,49 @@ func init() {
 	flag.StringVar(&version, "v", "1.40", "Docker API version")
 }
 
+type myContainer struct {
+	dockerCli *tools.MyDockerCli
+	id        string
+	name      string
+}
+
+func NewMyContainer(id, name string) *myContainer {
+	cli, err := tools.MyDockerClient(host, version)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &myContainer{
+		dockerCli: cli,
+		id:        id,
+		name:      name,
+	}
+}
+
+func (c *myContainer) restart() {
+	c.dockerCli.RestartContainer(c.id, c.name)
+}
+
+type myMsgBus struct {
+	mbus.MessageBus
+	topic string
+}
+
+func NewMyMsgBus() *myMsgBus {
+	return &myMsgBus{
+		mbus.New(10),
+		"ipChanged",
+	}
+}
+
+func (m *myMsgBus) regist(c *myContainer) {
+	m.Subscribe(m.topic, c.restart)
+}
+
+func (m *myMsgBus) notify() {
+	m.Publish(m.topic)
+}
+
 func main() {
 	//命令行参数初始化
 	flag.Parse()
@@ -39,22 +82,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	//根据传入参数，新建docker客户端
-	cli, err := tools.MyDockerClient(host, version)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	//Type: channel
 	//用于存取解析的IP
 	newIP := tools.Resolver(domainName, interval)
-	bus := mbus.New(10)
-	bus.Subscribe("ipChanged", tools.RestartContainer)
+	bus := NewMyMsgBus()
+	bus.regist(NewMyContainer(id, container))
 
 	for {
 		// <-newIP() is blocked till *domainName resolved IP changes
-		log.Printf("IP address changed to %s", <-newIP())
-		bus.Publish("ipChanged", cli, id, container)
+		select {
+		case ip := <-newIP():
+			log.Printf("IP address changed to %s", ip)
+			bus.notify()
+		}
 	}
 
 }

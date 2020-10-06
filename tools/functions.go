@@ -11,12 +11,12 @@ import (
 	"time"
 )
 
-type myDockerCli struct {
+type MyDockerCli struct {
 	*client.Client
 }
 
 //新建Docker客户端
-func MyDockerClient(host, version string) (*myDockerCli, error) {
+func MyDockerClient(host, version string) (*MyDockerCli, error) {
 	if host != "unix:///var/run/docker.sock" {
 		os.Setenv("DOCKER_HOST", host)
 	}
@@ -27,7 +27,7 @@ func MyDockerClient(host, version string) (*myDockerCli, error) {
 		return nil, err
 	}
 
-	return &myDockerCli{cli}, nil
+	return &MyDockerCli{cli}, nil
 }
 
 var lookup = func(d string) (string, error) { // define func var for testing
@@ -70,7 +70,7 @@ func Resolver(d string, interval time.Duration) func() chan string {
 }
 
 //判断给定容器名称对应的目标容器是否存在，存在则返回对应的容器对象 &container
-func (cli *myDockerCli) getContainerByName(name string) (container *types.
+func (cli *MyDockerCli) getContainerByName(name string) (container *types.
 	Container, ok bool) {
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
@@ -88,7 +88,7 @@ func (cli *myDockerCli) getContainerByName(name string) (container *types.
 }
 
 //判断给定容器id对应的目标容器是否存在，存在则返回对应的容器对象 &container
-func (cli *myDockerCli) getContainerByID(id string) (container *types.
+func (cli *MyDockerCli) getContainerByID(id string) (container *types.
 	Container, ok bool) {
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
@@ -105,7 +105,7 @@ func (cli *myDockerCli) getContainerByID(id string) (container *types.
 }
 
 //根据名称重启container
-func RestartContainerByName(cli *myDockerCli, name string) error {
+func (cli *MyDockerCli) restartContainerByName(name string) error {
 	if container, ok := cli.getContainerByName(name); ok {
 		//重启目标容器
 		if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
@@ -119,7 +119,7 @@ func RestartContainerByName(cli *myDockerCli, name string) error {
 }
 
 //根据id重启container
-func RestartContainerByID(cli *myDockerCli, id string) error {
+func (cli *MyDockerCli) restartContainerByID(id string) error {
 	if container, ok := cli.getContainerByID(id); ok {
 		//重启目标容器
 		if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
@@ -132,12 +132,12 @@ func RestartContainerByID(cli *myDockerCli, id string) error {
 	return nil
 }
 
-func RestartContainer(cli *myDockerCli, id, name string) error {
+func (cli *MyDockerCli) RestartContainer(id, name string) error {
 	if id != "" {
-		return RestartContainerByID(cli, id)
+		return cli.restartContainerByID(id)
 	}
 	if name != "" {
-		return RestartContainerByName(cli, name)
+		return cli.restartContainerByName(name)
 	}
 	return fmt.Errorf("contaienr name or id no set")
 }
