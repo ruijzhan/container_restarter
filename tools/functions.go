@@ -105,33 +105,39 @@ func (cli *myDockerCli) getContainerByID(id string) (container *types.
 }
 
 //根据名称重启container
-func RestartContainerByName(cli *myDockerCli, name string) func() error {
-	return func() error {
-		if container, ok := cli.getContainerByName(name); ok {
-			//重启目标容器
-			if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
-				return err
-			}
-			log.Printf("Container %s restarted", name)
-		} else {
-			return fmt.Errorf("container %s not found", name)
+func RestartContainerByName(cli *myDockerCli, name string) error {
+	if container, ok := cli.getContainerByName(name); ok {
+		//重启目标容器
+		if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
+			return err
 		}
-		return nil
+		log.Printf("Container %s restarted", name)
+	} else {
+		return fmt.Errorf("container %s not found", name)
 	}
+	return nil
 }
 
 //根据id重启container
-func RestartContainerByID(cli *myDockerCli, id string) func() error {
-	return func() error {
-		if container, ok := cli.getContainerByID(id); ok {
-			//重启目标容器
-			if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
-				return err
-			}
-			log.Printf("Container ID %s restarted", id)
-		} else {
-			return fmt.Errorf("container ID %s not found", id)
+func RestartContainerByID(cli *myDockerCli, id string) error {
+	if container, ok := cli.getContainerByID(id); ok {
+		//重启目标容器
+		if err := cli.ContainerRestart(context.Background(), container.ID, nil); err != nil {
+			return err
 		}
-		return nil
+		log.Printf("Container ID %s restarted", id)
+	} else {
+		return fmt.Errorf("container ID %s not found", id)
 	}
+	return nil
+}
+
+func RestartContainer(cli *myDockerCli, id, name string) error {
+	if id != "" {
+		return RestartContainerByID(cli, id)
+	}
+	if name != "" {
+		return RestartContainerByName(cli, name)
+	}
+	return fmt.Errorf("contaienr name or id no set")
 }

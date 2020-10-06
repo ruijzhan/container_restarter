@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/ruijzhan/container_restarter/tools"
+	mbus "github.com/vardius/message-bus"
 	"log"
 	"os"
 	"time"
@@ -47,21 +48,13 @@ func main() {
 	//Type: channel
 	//用于存取解析的IP
 	newIP := tools.Resolver(domainName, interval)
+	bus := mbus.New(10)
+	bus.Subscribe("ipChanged", tools.RestartContainer)
 
 	for {
 		// <-newIP() is blocked till *domainName resolved IP changes
 		log.Printf("IP address changed to %s", <-newIP())
-		//if container != "" && id == "" {
-		//    tools.RestartContainer(cli, container)
-		//} else if container == "" && id != "" {
-		//    tools.RestartContainer(cli, id)
-		//}
-		switch {
-		case container != "" && id == "":
-			tools.RestartContainerByName(cli, container)
-		case container == "" && id != "":
-			tools.RestartContainerByID(cli, id)
-		}
+		bus.Publish("ipChanged", cli, id, container)
 	}
 
 }
