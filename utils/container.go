@@ -24,5 +24,7 @@ func NewMyContainer(id, name string) *MyContainer {
 }
 
 func (c *MyContainer) Restart() {
-	c.dockerCli.restartContainer(c.id, c.name)
+	if err := c.dockerCli.restartContainer(c.id, c.name); err != nil {
+		log.Fatal(err)
+	}
 }
