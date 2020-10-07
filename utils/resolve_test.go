@@ -47,9 +47,9 @@ func TestResolver(t *testing.T) {
 	lookup = fakeLookup()
 	interval := time.Duration(time.Microsecond)
 
-	r := Resolver("www.example.com", interval)
+	r := IPChangeDetector("www.example.com", interval)
 	for i := 0; i < len(changedIPs); i++ {
-		ip := <-r()
+		ip := <-r
 		if changedIPs[i] != ip {
 			t.Errorf("IP changed to %s, want %s", ip, changedIPs[i])
 		}

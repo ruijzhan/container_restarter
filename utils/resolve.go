@@ -14,7 +14,7 @@ var lookup = func(d string) (string, error) { // define func var for testing
 	return ips[0].String(), nil
 }
 
-func Resolver(d string, interval time.Duration) func() chan string {
+func IPChangeDetector(d string, interval time.Duration) <-chan string {
 	oldIP, err := lookup(d)
 	if err != nil {
 		log.Printf("Warning: %v.", err)
@@ -22,25 +22,22 @@ func Resolver(d string, interval time.Duration) func() chan string {
 	tick := time.Tick(interval)
 	ch := make(chan string)
 
-	return func() chan string {
-		go func() {
-			for {
-				<-tick
+	go func() {
+		for {
+			select {
+			case <-tick:
 				ip, err := lookup(d)
-
 				if err != nil {
 					log.Printf("Warning: %v.", err)
-				} else {
-
-					if ip != oldIP {
-						oldIP = ip
-						ch <- ip
-						return
-					}
+					continue
+				}
+				if ip != oldIP {
+					oldIP = ip
+					ch <- ip
 				}
 			}
-		}()
+		}
+	}()
 
-		return ch
-	}
+	return ch
 }
